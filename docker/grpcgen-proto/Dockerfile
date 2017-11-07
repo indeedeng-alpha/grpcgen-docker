@@ -16,7 +16,7 @@ RUN rm -rf ${LINUX_PATTERN} && \
     rm -rf *zip*
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN mkdir /src /out
+RUN mkdir -p /src /out
 
 WORKDIR /src
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
