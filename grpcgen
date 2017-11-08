@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+##
+## Used to print the help text to the ui.
+##      $1 - status code to use during exit
+##
+function help() {
+cat <<EOF
+    usage: grpcgen [options] <protos>
+
+    description:
+        Uses docker to generate the code for gRPC
+
+    options:
+        -l, --lang <lang>           Specify the languages to generate.
+        -s, --src  <src>            Specify the source path.
+        -o, --out  <out>            Specify the output path.
+        -r, --registry <registry>   Specify the registry to pull from.
+        -g, --group <group>         Specify the group to pull from.
+        -h, --help                  Prints this message.
+
+EOF
+    exit ${1:-100}
+}
+
+##
+## Used to fail execution with a given error message.
+##      #1 - message to send to the end user
+##
+function fail_with_message() {
+    echo "    error: ${1}"
+    echo
+    help 1
+}
+
+# ensure docker is available
+[[ -z "$(which docker)" ]] && fail_with_message "docker does not appear to be installed"
+
+# ensure docker is running
+[[ -z "$(ps aux | grep "docker daemon" | grep -v grep)" ]] && fail_with_message "docker does not appear to be running"
+
+# ensure we can connect to docker
+[[ $(docker ps &>/dev/null) ]] && fail_with_message "cannot connect to docker"
+
+# process parameters
+langs=()
+src_path=""
+out_path=""
+registry=""
+group="indeed"
+protos=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h | --help)
+            help
+            ;;
+        -l | --lang)
+            langs+=("$2")
+            shift; shift
+            ;;
+        -s | --src)
+            src_path=$(readlink -f "$2")
+            shift; shift
+            ;;
+        -o | --out)
+            out_path=$(readlink -f "$2")
+            shift; shift
+            ;;
+        -r | --registry)
+            registry="$2"
+            shift; shift
+            ;;
+        -g | --group)
+            group="$2"
+            shift; shift
+            ;;
+        *)
+            protos+=("$1")
+            shift
+    esac
+done
+
+# validate our input
+[[ -z "${src_path}" ]] && fail_with_message "no source path specified"
+[[ -z "${out_path}" ]] && fail_with_message "no out path specified"
+[[ -z "${langs[@]}" ]] && fail_with_message "no languages specified"
+[[ -z "${protos[@]}" ]] && fail_with_message "no protos specified"
+[[ -z "${group}" ]] && fail_with_message "no group specified"
+
+# append a / when using a non-public registry
+if [[ ! -z "${registry}" ]]; then
+    registry="${registry}/"
+fi
+
+# Generate a UID that we will use for the container set.
+# This will ensure that we are able to remove the containers
+# we code generated for.
+readonly uuid=$(uuidgen)
+
+# Set a trap so that we ensure that the process cleans up
+# after itself
+function cleanup() {
+    for lang in "${langs[@]}"; do
+        docker rm -f "${uuid}-${lang}" 2>/dev/null
+    done
+}
+trap cleanup EXIT
+
+for lang in "${langs[@]}"; do
+    echo "Running ${lang}"
+    image_name="${uuid}-${lang}"
+    out_dir="${out_path}/${lang}"
+
+    docker run \
+        --name "${image_name}" \
+        -v "${src_path}":"/src" \
+        "${registry}${group}/grpcgen-${lang}" \
+        "${protos[@]}"
+
+    rm -rf ${out_dir}
+    mkdir -p ${out_dir}
+    docker cp ${image_name}:/out ${out_dir}
+
+    rsync -a ${out_dir}/out/* ${out_dir}
+    rm -rf ${out_dir}/out/
+done
