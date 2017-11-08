@@ -1,4 +1,5 @@
 FROM indeed/grpcgen-proto:latest
+WORKDIR /
 
 ENV NODE_VERSION=6.5.0
 ENV GRPC_VERSION=1.6.6

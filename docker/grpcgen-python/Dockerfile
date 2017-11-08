@@ -1,4 +1,5 @@
 FROM indeed/grpcgen-proto:latest
+WORKDIR /
 
 ENV PYTHON_VERSION=2.7
 ENV GRPC_VERSION=1.7.0

@@ -1,4 +1,5 @@
 FROM indeed/grpcgen-proto:latest
+WORKDIR /
 
 ENV GOLANG_VERSION=1.9
 ENV GOPATH="${HOME}/go"
