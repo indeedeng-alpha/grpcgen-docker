@@ -1,2 +1,4 @@
 #!/bin/sh
-protoc --proto_path=. --java_out=/out "$@"
+for proto in "$@"; do
+    protoc --proto_path=. --java_out=/out "$proto"
+done
