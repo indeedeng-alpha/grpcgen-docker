@@ -15,6 +15,6 @@ message MetricsResponse {
     // ... and so on ... //
 }
 
-service HealthService {
-    rpc health(MetricsRequest) returns (stream MetricsResponse);
+service MetricsService {
+    rpc metrics(MetricsRequest) returns (stream MetricsResponse);
 }
