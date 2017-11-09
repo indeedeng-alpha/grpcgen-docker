@@ -38,7 +38,7 @@ function fail_with_message() {
 [[ -z "$(which docker)" ]] && fail_with_message "docker does not appear to be installed"
 
 # ensure docker is running
-[[ -z "$(ps aux | grep "docker daemon" | grep -v grep)" ]] && fail_with_message "docker does not appear to be running"
+#[[ -z "$(ps aux | grep "docker daemon" | grep -v grep)" ]] && fail_with_message "docker does not appear to be running"
 
 # ensure we can connect to docker
 [[ $(docker ps &>/dev/null) ]] && fail_with_message "cannot connect to docker"
