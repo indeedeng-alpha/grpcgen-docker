@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package indeed.metrics;
+
+import "indeed/common/common.proto";
+
+message MetricsRequest {
+    repeated indeed.common.Header header = 1;
+    int32 report_count = 2;
+    int64 millis_between_reports = 3;
+}
+
+message MetricsResponse {
+    repeated indeed.common.Header header = 1;
+    // ... and so on ... //
+}
+
+service HealthService {
+    rpc health(MetricsRequest) returns (stream MetricsResponse);
+}
