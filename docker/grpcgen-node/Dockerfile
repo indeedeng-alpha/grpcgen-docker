@@ -15,6 +15,7 @@ RUN n ${NODE_VERSION} && \
     n use ${NODE_VERSION}
 
 RUN npm install -g grpc-tools@${GRPC_VERSION}
+RUN npm install -g ts-protoc-gen@0.12.0
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN mkdir -p /src /out
